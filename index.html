@@ -28,7 +28,6 @@ body {
   gap: 10px;
   border-right: 1px solid #222;
   height: 100vh;
-  overflow: hidden;
 }
 
 textarea {
@@ -43,10 +42,6 @@ textarea {
   overflow: auto;
 }
 
-textarea:focus {
-  border: 1px solid #6366f1;
-}
-
 /* RIGHT */
 .right {
   display: flex;
@@ -57,7 +52,6 @@ textarea:focus {
 
 .preview-wrapper {
   flex: 1;
-  min-height: 0;
   background: #1a1a1a;
   display: flex;
   align-items: center;
@@ -86,7 +80,6 @@ pre {
   position: fixed;
   top: 10px;
   right: 10px;
-  z-index: 999;
   padding: 8px 14px;
   background: #ff003c;
   color: white;
@@ -106,9 +99,9 @@ pre {
 <body>
 
 <div class="left">
-  <textarea id="html" placeholder="Tap to paste HTML"></textarea>
-  <textarea id="css" placeholder="Tap to paste CSS"></textarea>
-  <textarea id="js" placeholder="Tap to paste JS"></textarea>
+  <textarea id="html" placeholder="HTML"></textarea>
+  <textarea id="css" placeholder="CSS"></textarea>
+  <textarea id="js" placeholder="JS"></textarea>
 </div>
 
 <div class="right">
@@ -122,29 +115,7 @@ pre {
 
 <script>
 
-// -------- TAP TO PASTE (UNCHANGED) --------
-function enablePaste(id) {
-  const el = document.getElementById(id);
-
-  el.addEventListener("click", async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (!text) return;
-
-      el.value = text;
-      update();
-
-    } catch {
-      console.warn("Clipboard blocked");
-    }
-  });
-}
-
-enablePaste("html");
-enablePaste("css");
-enablePaste("js");
-
-// -------- BUILD PREVIEW (UNCHANGED) --------
+// -------- BUILD PREVIEW --------
 function build(html, css, js) {
   return `
 <!DOCTYPE html>
@@ -170,7 +141,7 @@ ${js}
 </html>`;
 }
 
-// -------- UPDATE (ONLY FORMAT CHANGED) --------
+// -------- UPDATE (ONLY FORMAT FIXED) --------
 function update() {
   const html = document.getElementById("html").value;
   const css = document.getElementById("css").value;
@@ -183,33 +154,51 @@ function update() {
       .replace(/\s+/g, "-")
       .toLowerCase();
 
-  // 🔥 ONLY FORMAT CHANGE HERE
-  const output = {
-    id: id,
-    name: id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-    category: "Buttons",
-    tags: ["neon", "glass", "futuristic"],
-    html: html,
-    css: css,
-    js: js,
-    authorId: "system",
-    createdAt: new Date().toISOString()
-  };
+  const output = `{
+  "id": "${id}",
+  "name": "${id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())}",
+  "category": "Buttons",
+  "tags": [
+    "neon",
+    "glass",
+    "futuristic"
+  ],
+  "html": \`${html}\`,
+  "css": \`${css}\`,
+  "js": \`${js}\`,
+  "authorId": "system",
+  "createdAt": new Date().toISOString()
+},`;
 
-  document.getElementById("output").textContent =
-    JSON.stringify(output, null, 2);
+  document.getElementById("output").textContent = output;
 }
 
-// -------- COPY (UNCHANGED) --------
-document.getElementById("output").addEventListener("click", () => {
-  const el = document.getElementById("output");
-  navigator.clipboard.writeText(el.textContent);
+// -------- PASTE --------
+["html", "css", "js"].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener("click", async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) return;
+      el.value = text;
+      update();
+    } catch {}
+  });
 
-  el.textContent = "✅ Copied!";
-  setTimeout(update, 800);
+  el.addEventListener("input", update);
 });
 
-// -------- CLEAR (UNCHANGED) --------
+// -------- COPY --------
+document.getElementById("output").addEventListener("click", () => {
+  navigator.clipboard.writeText(
+    document.getElementById("output").textContent
+  );
+
+  document.getElementById("output").textContent = "Copied!";
+  setTimeout(update, 600);
+});
+
+// -------- CLEAR --------
 function clearAll() {
   document.getElementById("html").value = "";
   document.getElementById("css").value = "";
@@ -217,7 +206,6 @@ function clearAll() {
   update();
 }
 
-// init
 update();
 
 </script>
