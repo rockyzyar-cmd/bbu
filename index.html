@@ -97,7 +97,6 @@ pre {
   font-size: 12px;
 }
 
-/* hover */
 .clear-btn:hover {
   background: #ff3366;
 }
@@ -123,7 +122,7 @@ pre {
 
 <script>
 
-// -------- TAP TO PASTE --------
+// -------- TAP TO PASTE (UNCHANGED) --------
 function enablePaste(id) {
   const el = document.getElementById(id);
 
@@ -145,7 +144,7 @@ enablePaste("html");
 enablePaste("css");
 enablePaste("js");
 
-// -------- BUILD PREVIEW --------
+// -------- BUILD PREVIEW (UNCHANGED) --------
 function build(html, css, js) {
   return `
 <!DOCTYPE html>
@@ -171,7 +170,7 @@ ${js}
 </html>`;
 }
 
-// -------- UPDATE --------
+// -------- UPDATE (ONLY FORMAT CHANGED) --------
 function update() {
   const html = document.getElementById("html").value;
   const css = document.getElementById("css").value;
@@ -179,21 +178,29 @@ function update() {
 
   document.getElementById("preview").srcdoc = build(html, css, js);
 
+  const id =
+    (html.match(/class="([^"]+)"/)?.[1] || "component")
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+
+  // 🔥 ONLY FORMAT CHANGE HERE
   const output = {
-    html,
-    css,
-    js
+    id: id,
+    name: id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+    category: "Buttons",
+    tags: ["neon", "glass", "futuristic"],
+    html: html,
+    css: css,
+    js: js,
+    authorId: "system",
+    createdAt: new Date().toISOString()
   };
 
-  // 🔥 FIX: add }, at end safely
-  let json = JSON.stringify(output, null, 2);
-
-  json = json.replace(/\n}$/, "\n},");
-
-  document.getElementById("output").textContent = json;
+  document.getElementById("output").textContent =
+    JSON.stringify(output, null, 2);
 }
 
-// -------- COPY --------
+// -------- COPY (UNCHANGED) --------
 document.getElementById("output").addEventListener("click", () => {
   const el = document.getElementById("output");
   navigator.clipboard.writeText(el.textContent);
@@ -202,7 +209,7 @@ document.getElementById("output").addEventListener("click", () => {
   setTimeout(update, 800);
 });
 
-// -------- CLEAR --------
+// -------- CLEAR (UNCHANGED) --------
 function clearAll() {
   document.getElementById("html").value = "";
   document.getElementById("css").value = "";
