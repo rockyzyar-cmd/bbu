@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Live Converter Tool</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: monospace;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100vh;
+  overflow: hidden;
+  background: #0b0b0f;
+  color: white;
+}
+
+/* LEFT */
+.left {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-right: 1px solid #222;
+  height: 100vh;
+  overflow: hidden;
+}
+
+textarea {
+  flex: 1;
+  min-height: 0;
+  background: #111;
+  color: #0ff;
+  border: none;
+  padding: 10px;
+  outline: none;
+  resize: none;
+  overflow: auto;
+}
+
+textarea:focus {
+  border: 1px solid #6366f1;
+}
+
+/* RIGHT */
+.right {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.preview-wrapper {
+  flex: 1;
+  min-height: 0;
+  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: white;
+}
+
+pre {
+  height: 35%;
+  margin: 0;
+  padding: 10px;
+  background: #111;
+  color: #0f0;
+  overflow: auto;
+  cursor: pointer;
+}
+
+/* CLEAR */
+.clear-btn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 999;
+  padding: 8px 14px;
+  background: #ff003c;
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+/* hover */
+.clear-btn:hover {
+  background: #ff3366;
+}
+</style>
+</head>
+
+<body>
+
+<div class="left">
+  <textarea id="html" placeholder="Tap to paste HTML"></textarea>
+  <textarea id="css" placeholder="Tap to paste CSS"></textarea>
+  <textarea id="js" placeholder="Tap to paste JS"></textarea>
+</div>
+
+<div class="right">
+  <div class="preview-wrapper">
+    <iframe id="preview"></iframe>
+  </div>
+  <pre id="output">Click to copy JSON</pre>
+</div>
+
+<button class="clear-btn" onclick="clearAll()">CLEAR</button>
+
+<script>
+
+// -------- TAP TO PASTE --------
+function enablePaste(id) {
+  const el = document.getElementById(id);
+
+  el.addEventListener("click", async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) return;
+
+      el.value = text;
+      update();
+
+    } catch {
+      console.warn("Clipboard blocked");
+    }
+  });
+}
+
+enablePaste("html");
+enablePaste("css");
+enablePaste("js");
+
+// -------- BUILD PREVIEW --------
+function build(html, css, js) {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body{
+  margin:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+${css}
+</style>
+</head>
+<body>
+${html}
+<script>
+${js}
+<\/script>
+</body>
+</html>`;
+}
+
+// -------- UPDATE --------
+function update() {
+  const html = document.getElementById("html").value;
+  const css = document.getElementById("css").value;
+  const js = document.getElementById("js").value;
+
+  document.getElementById("preview").srcdoc = build(html, css, js);
+
+  const output = {
+    html,
+    css,
+    js
+  };
+
+  // 🔥 FIX: add }, at end safely
+  let json = JSON.stringify(output, null, 2);
+
+  json = json.replace(/\n}$/, "\n},");
+
+  document.getElementById("output").textContent = json;
+}
+
+// -------- COPY --------
+document.getElementById("output").addEventListener("click", () => {
+  const el = document.getElementById("output");
+  navigator.clipboard.writeText(el.textContent);
+
+  el.textContent = "✅ Copied!";
+  setTimeout(update, 800);
+});
+
+// -------- CLEAR --------
+function clearAll() {
+  document.getElementById("html").value = "";
+  document.getElementById("css").value = "";
+  document.getElementById("js").value = "";
+  update();
+}
+
+// init
+update();
+
+</script>
+
+</body>
+</html>
